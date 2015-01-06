@@ -1,0 +1,7 @@
+(import prelude.list)
+
+(define factorial
+    (lambda x
+        (case x
+            ((0 1)
+             (_ (* x (factorial (- x 1))))))))

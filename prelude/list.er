@@ -1,0 +1,91 @@
+(define append
+    (lambda x_lst
+        (lambda y_lst
+            (case x_lst
+                ((nil y_lst)
+                 ((Cons x_car x_cdr) (Cons x_car ((append x_cdr) y_lst))))))))
+
+(define head
+    (lambda (Cons car _)
+        car))
+
+(define tail
+    (lambda (Cons _ cdr)
+        cdr))
+
+(define last
+    (lambda lst
+        (case lst
+            (((Cons car nil) car)
+             ((Cons _ cdr) (last cdr))))))
+
+(define init
+    (lambda lst
+        (case lst
+            (((Cons car nil) nil)
+             ((Cons car cdr) (Cons car (init cdr)))))))
+
+(define null
+    (lambda lst
+        (case lst
+            ((nil true)
+             (_ false)))))
+
+(define length
+    (lambda lst
+        (case lst
+            ((nil 0)
+             ((Cons _ cdr) (+ 1 (length cdr)))))))
+
+(define map
+    (lambda f
+        (lambda lst
+            (case lst
+                ((nil nil)
+                 ((Cons car cdr) (Cons (f car) ((map f) cdr))))))))
+
+(define reverse
+    (lambda lst
+        (case lst
+            ((nil nil)
+             ((Cons car cdr) ((append (reverse cdr)) (Cons car nil)))))))
+
+(define foldl
+    (lambda f
+        (lambda left
+            (lambda lst
+                (case lst
+                    ((nil left)
+                     ((Cons car cdr) (((foldl f) ((f left) car)) cdr))))))))
+(define foldr
+    (lambda f
+        (lambda right
+            (lambda lst
+                (case lst
+                    ((nil right)
+                     ((Cons car cdr) (((foldr f) ((f car) right)) cdr))))))))
+
+(define filter
+    (lambda f
+        (lambda lst
+            (case lst
+                ((nil nil)
+                 ((Cons car cdr) (if (f car) (Cons car ((filter f) cdr)) ((filter f) cdr))))))))
+
+(define take
+    (lambda n
+        (lambda lst
+            (case n
+                ((0 nil)
+                 (_ (case lst
+                        ((nil nil)
+                         ((Cons car cdr) (Cons car ((take (- n 1)) cdr)))))))))))
+
+(define drop
+    (lambda n
+        (lambda lst
+            (case n
+                ((0 lst)
+                 (_ (case lst
+                        ((nil nil)
+                         ((Cons _ cdr) ((drop (- n 1)) cdr))))))))))
