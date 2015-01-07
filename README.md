@@ -11,10 +11,9 @@ Erumpo is a lisp dialect which intends to be both expressive and performant. Cur
  - Algebraic Data Types and Pattern Matching
  - `eval` expressions on strings, mechanism for run-time metaprogramming
  - A module system with `import` declarations
- 
+
 The following features are still missing and will be implemented in this year:
 
- - More syntactic sugar, like multi-parameter functions/auto-currying
  - Proper error propagation, providing useful compile-time/run-time error information
  - Type system
  - First-class continuations/Tail-call optimization
@@ -39,7 +38,7 @@ Currently the REPL is the only way to run Erumpo programs. You may put the decla
 
 In Erumpo, declarations are separated from expressions. Declarations are executed, produces some side-effects (like modifying the top-level environment), and do not return a value. Also, in an Erumpo program, there can only be declarations; naked top-level expressions are invalid.
 
-### `define` Declaration
+### `define` Declarations
 
 A `define` declaration introduces top-level bindings. It has the following syntax:
 
@@ -54,7 +53,7 @@ Examples:
 
 When a `define` declaration is executed, `exp` is not immediately evaluated. Instead, it is saved and only evaluated when later evaluating an expression under REPL. When `pat` conflicts with an earlier identical `pat`, the earlier one will be overwritten.
 
-### `import` Declaration
+### `import` Declarations
 
 An `import` declaration imports declarations from an Erumpo program. It has the following syntax:
 
@@ -117,21 +116,23 @@ Currently there lacks a type checker, so it is up to the programmer to enforce t
 
 A variable expression is simply the variable's name, like `x` or `f`. The variable's name must begin with a lowercase letter to distinguish it from a constructor. Evaluating a variable expression under an environment simply fetches the value if the binding exists, otherwise the evaluation fails.
 
-### `lambda` Expressions & Application Expression
+### `lambda` Expressions & Application Expressions
 
 A `lambda` expression denotes an anonymous function. Its syntax is as follows:
 
-    (lambda pat exp)
+    (lambda pat0 pat1 .. exp)
 
-When evaluated, `pat`, `exp` and the current environment are all encapsulated into a closure value.
+When evaluated, `pat0`, `pat1`, .. , `exp` and the current environment are all encapsulated into a closure value.
 
 An application expression applies a function to its parameter. Its syntax is as follows:
 
-    (f_exp x_exp)
+    (f_exp exp0 exp1 ..)
 
-When evaluated, `f_exp` is evaluated to get a closure value; then `x_exp` is evaluated to get a parameter value `x_val`; then `x_val` is matched against `pat`, and if succeeds, the resulting environment is combined with the closure environment, resulting in an environment to evaluate `exp`.
+When evaluated, `f_exp` is evaluated to get a closure value; then `exp0`, `exp1`, .. are evaluated to get parameter values `val0`, `val1`, .. ; then the values are matched against the patterns, and if succeeds, the resulting environment is combined with the closure environment, resulting in an environment to evaluate `exp`.
 
-Note that a function defined by `lambda` only takes 1 argument; functions with multiple arguments can be written as curried functions or one function taking a `Tuple` ADT value as argument.
+The multi-parameter function definitions and applications support automatic currying. The zero-parameter `lambda` expression and application is equivalent to `lambda` with empty pattern and application to `nil`.
+
+The built-in operators and ADT constructors do not support automatic currying yet.
 
 ### `letrec` Expressions
 
