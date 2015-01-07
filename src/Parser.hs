@@ -135,17 +135,41 @@ varexp :: Parser Exp
 varexp = do s <- varname
             return (VarExp s)
 
+pat2exp :: Pat -> Exp
+pat2exp (ConstPat v) = ConstExp v
+pat2exp (VarPat v) = VarExp v
+pat2exp (ADTPat c ps) = ADTExp c (map pat2exp ps)
+
+plambdaexp :: Parser Exp
+plambdaexp = do char '('
+                whitespace
+                string "lambda"
+                ps <- plus (do whitespace
+                               p <- pat
+                               return p)
+                whitespace
+                char ')'
+                let f [] = (LambdaExp NilPat e)
+                    f (p:[]) = (LambdaExp p e)
+                    f (p:ps) = (LambdaExp p (f ps))
+                    e = pat2exp (last ps)
+                    in return (f (init ps))
+
 lambdaexp :: Parser Exp
 lambdaexp = do char '('
                whitespace
                string "lambda"
-               whitespace
-               p <- pat
+               ps <- plus (do whitespace
+                              p <- pat
+                              return p)
                whitespace
                e <- expr
                whitespace
                char ')'
-               return (LambdaExp p e)
+               let f [] = (LambdaExp NilPat e)
+                   f (p:[]) = (LambdaExp p e)
+                   f (p:ps) = (LambdaExp p (f ps))
+                   in (return (f ps))
 
 definedec :: Parser Dec
 definedec = do char '('
@@ -232,11 +256,15 @@ appexp :: Parser Exp
 appexp = do char '('
             whitespace
             f_exp <- expr
-            whitespace
-            x_exp <- expr
+            es <- star (do whitespace
+                           e <- expr
+                           return e)
             whitespace
             char ')'
-            return (AppExp f_exp x_exp)
+            let f [] acc = AppExp acc (ConstExp UnitVal)
+                f (e:[]) acc = AppExp acc e
+                f (e:es) acc = AppExp (f es acc) e
+                in return (f (reverse es) f_exp)
 
 adtexp :: Parser Exp
 adtexp = do char '('
@@ -310,4 +338,4 @@ pat :: Parser Pat
 pat = listplus [nilpat,constpat,varpat,adtpat]
 
 expr :: Parser Exp
-expr = listplus [constexp,varexp,unaryopexp,binaryopexp,lambdaexp,letrecexp,ifexp,caseexp,appexp,appexp,adtexp,listexp]
+expr = listplus [constexp,varexp,unaryopexp,binaryopexp,lambdaexp,plambdaexp,letrecexp,ifexp,caseexp,appexp,adtexp,listexp]
