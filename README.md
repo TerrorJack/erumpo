@@ -11,7 +11,7 @@ Erumpo is a lisp dialect which intends to be both expressive and performant. Cur
  - Algebraic Data Types and Pattern Matching
  - `eval` expressions on strings, mechanism for run-time metaprogramming
  - A module system with `import` declarations
-
+ 
 The following features are still missing and will be implemented in this year:
 
  - Proper error propagation, providing useful compile-time/run-time error information
@@ -187,6 +187,34 @@ When evaluated, first `x_exp` and `y_exp` are evaluated, then the operator `op` 
  - `+`/`-`/`*`/`/`: arithmetic operators for `Int`/`Float` type
 
 For the precise semantics of comparison/arithmetic, refer the `Interpreter` module of the implementation. Structured comparison is enabled, for example, the comparison result of two strings (lists of `Char`s) is decided by lexicographical comparison. However, comparing two ADT values with different constructors will cause a type error. (for convenience, `nil` is less than any value)
+
+## Implementation Internals
+
+### Overview
+
+Currently Erumpo has an interpreter written in Haskell. The interpreter program is divided into the following 5 modules:
+
+ - `Common.hs`, includes the common type definitions for the whole interpreter program
+ - `Interpreter.hs`, includes the expression evaluator and utility functions for pattern matching, comparing/printing values, etc
+ - `Main.hs`, launches an interactive REPL with empty environment
+ - `Parser.hs`, includes a naive monadic PEG(Parsing Expression Grammars) parser. Support for syntactic sugar (the [] notation/multi-parameter functions) are implemented here and not visible to the interpreter
+ - `REPL.hs`, includes the REPL and implements `declare`/`import` declarations
+
+### Environment Model
+
+The evaluation of an Erumpo expression is done in an environment, which is a set of bindings from variable names to values. `Common.hs` includes the definition of the environment: `type Env = Map.Map String Val`. The Haskell standard module `Data.Map` is used, which internally is a persistent binary search tree. Using it simplifies the implementation (in C/C++ there is no persistent data structure in the standard libraries!), reduces variable insertion/lookup overhead and preserves enough information to support `eval` expressions on strings.
+
+### Structured Comparison
+
+Erumpo supports structured comparison. For example, evaluating `(< [2 3 5 7] [2 4 6])` yields `true`. In general, there are two types of comparisons: comparison for equality (similar to the `Eq` type class in Haskell) and comparison for ordering (similar to the `Ord` type class in Haskell).
+
+When comparing two values of different types for equality, the result is `false`, but the result is fatal error when comparing them for ordering. The comparison for equality is used for matching constant patterns.
+
+For convenience, `nil` is less than any value. Then we can obtain a lexicographical order for ADT values.
+
+### Monadic Code Style
+
+Error handling in other languages involves checking return values or using `try`/`catch` constructs to play with exceptions. These styles produce a lot of boilerplate code. Instead, the `Maybe` monad is used throughout the program for simple and effective error handling, and Haskell provides the `do` notation as a handy syntactic sugar.
 
 ## License
 
